@@ -17,7 +17,8 @@ defmodule BrewPlot.Application do
       # Start a worker by calling: BrewPlot.Worker.start_link(arg)
       # {BrewPlot.Worker, arg},
       # Start to serve requests, typically the last entry
-      BrewPlotWeb.Endpoint
+      BrewPlotWeb.Endpoint,
+      BrewPlot.Brewery.Brew
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

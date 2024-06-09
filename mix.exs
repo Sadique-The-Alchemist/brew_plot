@@ -58,7 +58,8 @@ defmodule BrewPlot.MixProject do
       {:gettext, "~> 0.20"},
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.1.1"},
-      {:bandit, "~> 1.2"}
+      {:bandit, "~> 1.2"},
+      {:csv, "~> 3.2"}
     ]
   end
 
@@ -74,8 +75,11 @@ defmodule BrewPlot.MixProject do
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
       test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"],
-      "assets.setup": ["tailwind.install --if-missing", "esbuild.install --if-missing"],
-      "assets.build": ["tailwind brew_plot", "esbuild brew_plot"],
+      "assets.setup": [
+        "tailwind.install --if-missing",
+        "esbuild.install --if-missing"
+      ],
+      "assets.build": ["tailwind brew_plot", "esbuild brew_plot --platform=node"],
       "assets.deploy": [
         "tailwind brew_plot --minify",
         "esbuild brew_plot --minify",
