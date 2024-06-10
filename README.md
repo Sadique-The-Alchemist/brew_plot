@@ -1,5 +1,5 @@
 # BrewPlot
-To run this application Erlang, Elixir, Postgres and Node are required
+Make sure you already installed Erlang, Elixir, Postgres and Node.
 
 To start your Phoenix server:
 
