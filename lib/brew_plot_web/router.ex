@@ -81,6 +81,8 @@ defmodule BrewPlotWeb.Router do
       live "/users/confirm/:token", UserConfirmationLive, :edit
       live "/users/confirm", UserConfirmationInstructionsLive, :new
       live "/plots", PlotLive
+      live "/plots/:plot_id", PlotLive
+      live "/plots/:action/:plot_id", PlotLive
     end
   end
 end

@@ -12,6 +12,7 @@ defmodule BrewPlot.Brewery.Plot do
     field :expression, :string
     field :serialized, :map
     belongs_to(:user, User)
+    timestamps()
   end
 
   def changeset(plot, attrs \\ %{}) do
@@ -25,7 +26,7 @@ defmodule BrewPlot.Brewery.Plot do
     name = get_field(changeset, :dataset_name)
 
     unless "#{name}.csv" in Brew.valid_files() do
-      add_error(changeset, :name, "Not a valid name")
+      add_error(changeset, :dataset_name, "Not a valid name")
     else
       changeset
     end
