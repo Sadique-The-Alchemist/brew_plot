@@ -2,40 +2,20 @@ defmodule BrewPlotWeb.PlotLive do
   use BrewPlotWeb, :live_view
   alias BrewPlot.Brewery
   import BrewPlotWeb.PlotComponents
-
+  alias BrewPlot.Vmodel
   def mount(%{"plot_id" => plot_id, "action" => "edit" = action}, _session, socket) do
     form = Brewery.change_plot(plot_id, %{}) |> to_form() |> Map.put(:action, action)
     plot = Brewery.get_plot(plot_id)
+    vmodel = Vmodel.edit_plot(form, plot_id, action, plot)
 
-    socket =
-      socket
-      |> assign(:plot_dataset, false)
-      |> assign(:list, false)
-      |> assign(:form, form)
-      |> assign(:plot_id, plot_id)
-      |> assign(:action, action)
-      |> assign(:plot, plot)
-      |> assign(:share, false)
-      |> assign(:shared_plot_form, false)
-
-    {:ok, socket}
+    {:ok, assign(socket, :vmodel, vmodel)}
   end
 
   def mount(%{"action" => "new" = action}, _session, socket) do
     form = Brewery.change_plot() |> to_form() |> Map.put(:action, action)
 
-    socket =
-      socket
-      |> assign(:plot_dataset, false)
-      |> assign(:list, false)
-      |> assign(:form, form)
-      |> assign(:plot_id, false)
-      |> assign(:action, action)
-      |> assign(:plot, false)
-      |> assign(:share, false)
-      |> assign(:shared_plot_form, false)
-
-    {:ok, socket}
+    vmodel = Vmodel.new_plot(form, action)
+      {:ok, assign(socket, :vmodel, vmodel)}
   end
 
   def mount(%{"plot_id" => plot_id, "action" => "share" = action}, _session, socket) do
@@ -46,36 +26,16 @@ defmodule BrewPlotWeb.PlotLive do
     socket = push_event(socket, "draw", %{set: data})
     data = Jason.encode!(data)
     shared_plot_form = Brewery.change_shared_plot() |> to_form()
+    vmodel = Vmodel.share_plot(data, plot_id, action, plot, shared_plot_form)
 
-    socket =
-      socket
-      |> assign(:plot_dataset, data)
-      |> assign(:list, false)
-      |> assign(:form, false)
-      |> assign(:plot_id, plot_id)
-      |> assign(:action, action)
-      |> assign(:plot, plot)
-      |> assign(:share, false)
-      |> assign(:shared_plot_form, shared_plot_form)
-
-    {:ok, socket}
+      {:ok, assign(socket, :vmodel, vmodel)}
   end
 
   def mount(%{"action" => "shared", "plot_id" => "no_id"}, _session, socket) do
     plots = Brewery.shared_plots(socket.assigns.current_user.id)
+    vmodel = Vmodel.shared_plots(plots)
 
-    socket =
-      socket
-      |> assign(:form, false)
-      |> assign(:plots, plots)
-      |> assign(:list, true)
-      |> assign(:plot_dataset, false)
-      |> assign(:plot_id, false)
-      |> assign(:action, false)
-      |> assign(:share, true)
-      |> assign(:shared_plot_form, false)
-
-    {:ok, socket}
+      {:ok, assign(socket, :vmodel, vmodel)}
   end
 
   def mount(%{"action" => "shared", "plot_id" => plot_id}, _session, socket) do
@@ -84,19 +44,9 @@ defmodule BrewPlotWeb.PlotLive do
     data = Brewery.generate_dataset(plot.dataset_name, plot.expression)
     socket = push_event(socket, "draw", %{set: data})
     data = Jason.encode!(data)
+    vmodel = Vmodel.view_shared_plot(data)
 
-    socket =
-      socket
-      |> assign(:form, false)
-      |> assign(:plots, false)
-      |> assign(:list, false)
-      |> assign(:plot_dataset, data)
-      |> assign(:plot_id, false)
-      |> assign(:action, false)
-      |> assign(:share, true)
-      |> assign(:shared_plot_form, false)
-
-    {:ok, socket}
+    {:ok, assign(socket, :vmodel, vmodel)}
   end
 
   def mount(%{"plot_id" => plot_id}, _session, socket) do
@@ -106,35 +56,15 @@ defmodule BrewPlotWeb.PlotLive do
     socket = push_event(socket, "draw", %{set: data})
     data = Jason.encode!(data)
 
-    socket =
-      socket
-      |> assign(:plot_dataset, data)
-      |> assign(:list, false)
-      |> assign(:form, false)
-      |> assign(:plot_id, plot_id)
-      |> assign(:action, false)
-      |> assign(:plot, plot)
-      |> assign(:share, false)
-      |> assign(:shared_plot_form, false)
-
-    {:ok, socket}
+    vmodel = Vmodel.view_plot(data, plot_id, plot)
+    {:ok, assign(socket, :vmodel, vmodel)}
   end
 
   def mount(_params, _session, socket) do
     plots = Brewery.list_plots(socket.assigns.current_user.id)
+    vmodel = Vmodel.list_plots(plots)
 
-    socket =
-      socket
-      |> assign(:form, false)
-      |> assign(:plots, plots)
-      |> assign(:list, true)
-      |> assign(:plot_dataset, false)
-      |> assign(:plot_id, false)
-      |> assign(:action, false)
-      |> assign(:share, false)
-      |> assign(:shared_plot_form, false)
-
-    {:ok, socket}
+      {:ok, assign(socket, :vmodel, vmodel)}
   end
 
   def render(assigns) do
@@ -167,12 +97,12 @@ defmodule BrewPlotWeb.PlotLive do
         </div>
       </aside>
       <div>
-        <%= if @list do %>
-          <.table id="plots" rows={@plots}>
+        <%= if @vmodel.list do %>
+          <.table id="plots" rows={@vmodel.plots}>
             <:col :let={plot} label="Name"><%= plot.name %></:col>
             <:col :let={plot} label="Dataset Name"><%= plot.dataset_name %></:col>
             <:col :let={plot} label="Expression">
-              <%= if @share do %>
+              <%= if @vmodel.share do %>
                 <.link navigate={"#{plot.id}"} class="text-blue-600">
                   <%= plot.expression %>
                 </.link>
@@ -184,23 +114,23 @@ defmodule BrewPlotWeb.PlotLive do
             </:col>
 
             <:col :let={plot} label="">
-              <%= unless @share do %>
+              <%= unless @vmodel.share do %>
                 <.button phx-click="delete" value={plot.id}>Delete</.button>
               <% end %>
             </:col>
           </.table>
-          <%= unless @share do %>
+          <%= unless @vmodel.share do %>
             <.link navigate="/plots/new/no_id" class="text-blue-600">New</.link>
           <% end %>
         <% end %>
-        <%= if @plot_dataset do %>
-          <.plot_component plot_dataset={@plot_dataset} plot_id={@plot_id} share={@share} />
+        <%= if @vmodel.plot_dataset do %>
+          <.plot_component vmodel={@vmodel} />
         <% end %>
-        <%= if @form do %>
-          <.form_component form={@form} action={@action} />
+        <%= if @vmodel.form do %>
+          <.form_component vmodel={@vmodel} />
         <% end %>
-        <%= if @shared_plot_form do %>
-          <.share_form shared_plot_form={@shared_plot_form} action={@action} />
+        <%= if @vmodel.shared_plot_form do %>
+          <.share_form vmodel={@vmodel}/>
         <% end %>
       </div>
     </div>
@@ -215,20 +145,20 @@ defmodule BrewPlotWeb.PlotLive do
     socket =
       attrs
       |> Map.put("user_id", socket.assigns.current_user.id)
-      |> handle_action(socket.assigns.form.action, socket)
+      |> handle_action(socket.assigns.vmodel.action, socket)
       |> case do
         {:ok, plot} ->
           data = Brewery.generate_dataset(plot.dataset_name, plot.expression)
           socket = push_event(socket, "draw", %{set: data})
           data = Jason.encode!(data)
-
+          vmodel = Vmodel.view_plot(data,plot.id,plot)
           put_flash(socket, :info, "Saved successfully")
-          |> assign(:plot_dataset, data)
-          |> assign(:form, false)
-          |> assign(:plot_id, plot.id)
+          |> assign(:vmodel, vmodel)
 
         {:error, changeset} ->
-          put_flash(socket, :error, "Something went wrong") |> assign(:form, to_form(changeset))
+          form = to_form(changeset)
+          vmodel = Vmodel.error_changeset(socket.assigns.vmodel,form)
+          put_flash(socket, :error, "Something went wrong") |> assign(:vmodel, vmodel)
       end
 
     {:noreply, socket}
@@ -236,14 +166,18 @@ defmodule BrewPlotWeb.PlotLive do
 
   def handle_event("share", %{"shared_plot" => %{"email" => email}}, socket) do
     socket =
-      case Brewery.share_plot(email, socket.assigns.plot_id) do
+      case Brewery.share_plot(email, socket.assigns.vmodel.plot_id) do
         {:ok, _shared_plot} ->
-          socket |> put_flash(:info, "Shared succesfully") |> assign(:shared_plot_form, false)
+          vmodel = socket.assigns.vmodel|>Map.put(:shared_plot_form, false)
+          socket |> put_flash(:info, "Shared succesfully") |> assign(:vmodel, vmodel)
 
         {:error, changeset} ->
+         form= changeset |> to_form()
+         vmodel = socket.assigns.vmodel
+          vmodel = Vmodel.share_plot(vmodel.plot_dataset,vmodel.plot.id, vmodel.action,vmodel.plot, form )
           socket
           |> put_flash(:error, "Something went wrong")
-          |> assign(:shared_plot_form, changeset |> to_form())
+          |> assign(:vmodel, vmodel )
       end
 
     {:noreply, socket}
@@ -253,16 +187,9 @@ defmodule BrewPlotWeb.PlotLive do
     id |> String.to_integer() |> Brewery.delete_plot()
     plots = Brewery.list_plots(socket.assigns.current_user.id)
 
-    socket =
-      socket
-      |> assign(:form, false)
-      |> assign(:plots, plots)
-      |> assign(:list, true)
-      |> assign(:plot_dataset, false)
-      |> assign(:plot_id, false)
-      |> assign(:action, false)
+     vmodel = Vmodel.list_plots(plots)
 
-    {:noreply, socket}
+    {:noreply, assign(socket, :vmodel, vmodel)}
   end
 
   defp handle_action(attrs, "new", _socket) do
@@ -270,6 +197,6 @@ defmodule BrewPlotWeb.PlotLive do
   end
 
   defp handle_action(attrs, "edit", socket) do
-    Brewery.update_plot(socket.assigns.plot, attrs)
+    Brewery.update_plot(socket.assigns.vmodel.plot, attrs)
   end
 end

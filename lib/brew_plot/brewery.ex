@@ -88,7 +88,7 @@ defmodule BrewPlot.Brewery do
   end
 
   defp flotify_data(dataset, field) do
-    Map.get(dataset, field)
+    Map.get(dataset, String.trim(field))
     |> Enum.filter(fn value -> String.length(value) > 0 end)
     |> Enum.map(fn value ->
       value =

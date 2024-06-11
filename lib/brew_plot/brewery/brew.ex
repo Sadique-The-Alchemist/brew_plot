@@ -78,7 +78,7 @@ defmodule BrewPlot.Brewery.Brew do
     end)
     |> Enum.reduce(%{}, fn {key, value}, acc ->
       value = Enum.reverse(value)
-      Map.put(acc, key, value)
+      Map.put(acc, String.trim(key), value)
     end)
   end
 
