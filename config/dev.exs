@@ -2,10 +2,6 @@ import Config
 
 # Configure your database
 config :brew_plot, BrewPlot.Repo,
-  username: "postgres",
-  password: "postgres",
-  hostname: "localhost",
-  database: "brew_plot_dev",
   stacktrace: true,
   show_sensitive_data_on_connection_error: true,
   pool_size: 10

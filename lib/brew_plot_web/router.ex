@@ -68,6 +68,9 @@ defmodule BrewPlotWeb.Router do
       on_mount: [{BrewPlotWeb.UserAuth, :ensure_authenticated}] do
       live "/users/settings", UserSettingsLive, :edit
       live "/users/settings/confirm_email/:token", UserSettingsLive, :confirm_email
+      live "/plots", PlotLive
+      live "/plots/:plot_id", PlotLive
+      live "/plots/:action/:plot_id", PlotLive
     end
   end
 
@@ -80,9 +83,6 @@ defmodule BrewPlotWeb.Router do
       on_mount: [{BrewPlotWeb.UserAuth, :mount_current_user}] do
       live "/users/confirm/:token", UserConfirmationLive, :edit
       live "/users/confirm", UserConfirmationInstructionsLive, :new
-      live "/plots", PlotLive
-      live "/plots/:plot_id", PlotLive
-      live "/plots/:action/:plot_id", PlotLive
     end
   end
 end
