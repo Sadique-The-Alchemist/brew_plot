@@ -3,6 +3,9 @@ Make sure you already installed Erlang, Elixir, Postgres and Node.
 
 To start your Phoenix server:
 
+  * Create .env.dev and .env.test files 
+  * add Database URL for both env's respectively eg:
+     export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/brew_plot_dev?ssl=false&pool_size=10" for dev
   * Run `mix setup` to install and setup dependencies
   * Run `cd assets`  `npm i`
   * Start Phoenix endpoint with `mix phx.server` or inside IEx with `iex -S mix phx.server`
