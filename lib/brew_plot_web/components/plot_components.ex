@@ -29,6 +29,7 @@ defmodule BrewPlotWeb.PlotComponents do
     </div>
     """
   end
+
   def share_form(assigns) do
     ~H"""
     <.simple_form for={@vmodel.shared_plot_form} phx-submit="share">

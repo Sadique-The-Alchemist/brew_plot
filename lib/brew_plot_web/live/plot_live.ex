@@ -3,6 +3,7 @@ defmodule BrewPlotWeb.PlotLive do
   alias BrewPlot.Brewery
   import BrewPlotWeb.PlotComponents
   alias BrewPlot.Vmodel
+
   def mount(%{"plot_id" => plot_id, "action" => "edit" = action}, _session, socket) do
     form = Brewery.change_plot(plot_id, %{}) |> to_form() |> Map.put(:action, action)
     plot = Brewery.get_plot(plot_id)
@@ -15,7 +16,7 @@ defmodule BrewPlotWeb.PlotLive do
     form = Brewery.change_plot() |> to_form() |> Map.put(:action, action)
 
     vmodel = Vmodel.new_plot(form, action)
-      {:ok, assign(socket, :vmodel, vmodel)}
+    {:ok, assign(socket, :vmodel, vmodel)}
   end
 
   def mount(%{"plot_id" => plot_id, "action" => "share" = action}, _session, socket) do
@@ -28,14 +29,14 @@ defmodule BrewPlotWeb.PlotLive do
     shared_plot_form = Brewery.change_shared_plot() |> to_form()
     vmodel = Vmodel.share_plot(data, plot_id, action, plot, shared_plot_form)
 
-      {:ok, assign(socket, :vmodel, vmodel)}
+    {:ok, assign(socket, :vmodel, vmodel)}
   end
 
   def mount(%{"action" => "shared", "plot_id" => "no_id"}, _session, socket) do
     plots = Brewery.shared_plots(socket.assigns.current_user.id)
     vmodel = Vmodel.shared_plots(plots)
 
-      {:ok, assign(socket, :vmodel, vmodel)}
+    {:ok, assign(socket, :vmodel, vmodel)}
   end
 
   def mount(%{"action" => "shared", "plot_id" => plot_id}, _session, socket) do
@@ -64,7 +65,7 @@ defmodule BrewPlotWeb.PlotLive do
     plots = Brewery.list_plots(socket.assigns.current_user.id)
     vmodel = Vmodel.list_plots(plots)
 
-      {:ok, assign(socket, :vmodel, vmodel)}
+    {:ok, assign(socket, :vmodel, vmodel)}
   end
 
   def render(assigns) do
@@ -130,7 +131,7 @@ defmodule BrewPlotWeb.PlotLive do
           <.form_component vmodel={@vmodel} />
         <% end %>
         <%= if @vmodel.shared_plot_form do %>
-          <.share_form vmodel={@vmodel}/>
+          <.share_form vmodel={@vmodel} />
         <% end %>
       </div>
     </div>
@@ -151,13 +152,14 @@ defmodule BrewPlotWeb.PlotLive do
           data = Brewery.generate_dataset(plot.dataset_name, plot.expression)
           socket = push_event(socket, "draw", %{set: data})
           data = Jason.encode!(data)
-          vmodel = Vmodel.view_plot(data,plot.id,plot)
+          vmodel = Vmodel.view_plot(data, plot.id, plot)
+
           put_flash(socket, :info, "Saved successfully")
           |> assign(:vmodel, vmodel)
 
         {:error, changeset} ->
           form = to_form(changeset)
-          vmodel = Vmodel.error_changeset(socket.assigns.vmodel,form)
+          vmodel = Vmodel.error_changeset(socket.assigns.vmodel, form)
           put_flash(socket, :error, "Something went wrong") |> assign(:vmodel, vmodel)
       end
 
@@ -168,16 +170,25 @@ defmodule BrewPlotWeb.PlotLive do
     socket =
       case Brewery.share_plot(email, socket.assigns.vmodel.plot_id) do
         {:ok, _shared_plot} ->
-          vmodel = socket.assigns.vmodel|>Map.put(:shared_plot_form, false)
+          vmodel = socket.assigns.vmodel |> Map.put(:shared_plot_form, false)
           socket |> put_flash(:info, "Shared succesfully") |> assign(:vmodel, vmodel)
 
         {:error, changeset} ->
-         form= changeset |> to_form()
-         vmodel = socket.assigns.vmodel
-          vmodel = Vmodel.share_plot(vmodel.plot_dataset,vmodel.plot.id, vmodel.action,vmodel.plot, form )
+          form = changeset |> to_form()
+          vmodel = socket.assigns.vmodel
+
+          vmodel =
+            Vmodel.share_plot(
+              vmodel.plot_dataset,
+              vmodel.plot.id,
+              vmodel.action,
+              vmodel.plot,
+              form
+            )
+
           socket
           |> put_flash(:error, "Something went wrong")
-          |> assign(:vmodel, vmodel )
+          |> assign(:vmodel, vmodel)
       end
 
     {:noreply, socket}
@@ -187,7 +198,7 @@ defmodule BrewPlotWeb.PlotLive do
     id |> String.to_integer() |> Brewery.delete_plot()
     plots = Brewery.list_plots(socket.assigns.current_user.id)
 
-     vmodel = Vmodel.list_plots(plots)
+    vmodel = Vmodel.list_plots(plots)
 
     {:noreply, assign(socket, :vmodel, vmodel)}
   end
